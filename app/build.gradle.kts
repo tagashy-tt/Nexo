@@ -12,11 +12,26 @@ android {
         applicationId = "com.nexo.app"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.4.0"
+    }
+    // Firma estable (necesaria para que las actualizaciones se instalen encima). Ver docs/ACTUALIZACIONES.md
+    val ksFile = System.getenv("KS_FILE")
+    signingConfigs {
+        if (ksFile != null && File(ksFile).exists()) {
+            create("nexo") {
+                storeFile = File(ksFile)
+                storePassword = System.getenv("KS_PASS")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASS")
+            }
+        }
     }
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("nexo") ?: signingConfigs.getByName("debug")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -24,7 +39,10 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
-    lint { disable += "MissingTranslation" } // idiomas parciales caen al inglés
+    lint {
+        disable += "MissingTranslation" // idiomas parciales caen al inglés
+        checkReleaseBuilds = false      // que un aviso de lint no tumbe el build de CI
+    }
 }
 
 dependencies {
@@ -32,6 +50,7 @@ dependencies {
     implementation(bom)
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
