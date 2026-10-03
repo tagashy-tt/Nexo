@@ -8,11 +8,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-<<<<<<< Updated upstream
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.decodeFromByteArray
-=======
->>>>>>> Stashed changes
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.protobuf.ProtoNumber
