@@ -27,7 +27,7 @@ object Descargas {
         val nombre = "$titulo - ${cap.nombre}"
         val req = OneTimeWorkRequestBuilder<DescargaWorker>()
             .addTag("descarga").addTag("t:$nombre").addTag("d:$destino")
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(if (Ajustes.soloWifi) NetworkType.UNMETERED else NetworkType.CONNECTED).build())
             .setInputData(workDataOf("fuente" to fuenteId, "cap" to cap.id, "titulo" to nombre, "destino" to destino))
             .build()
         WorkManager.getInstance(ctx).enqueueUniqueWork("$destino:${cap.id}", ExistingWorkPolicy.KEEP, req)
