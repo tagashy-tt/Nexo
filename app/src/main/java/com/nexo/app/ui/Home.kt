@@ -35,7 +35,7 @@ import com.nexo.app.core.*
 private class HeroDatos(val item: Item, val sub: String, val onClick: () -> Unit)
 
 @Composable
-fun HomeScreen(abrir: (Pantalla) -> Unit, buscar: (String) -> Unit) {
+fun HomeScreen(abrir: (Pantalla) -> Unit, buscar: (String) -> Unit, irUpdates: () -> Unit) {
     var tipo by remember { mutableStateOf(TipoTab.Home) }
     var q by remember { mutableStateOf("") }
     val d = Store.datos
@@ -63,7 +63,7 @@ fun HomeScreen(abrir: (Pantalla) -> Unit, buscar: (String) -> Unit) {
     ) {
         item {
             OutlinedTextField(
-                q, { q = it }, Modifier.fillMaxWidth(), singleLine = true,
+                q, { q = it }, Modifier.fillMaxWidth().entrada(0), singleLine = true,
                 shape = RoundedCornerShape(26.dp),
                 leadingIcon = { Icon(Icons.Filled.Search, null) },
                 placeholder = { Text(stringResource(R.string.search_hint), maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -75,17 +75,17 @@ fun HomeScreen(abrir: (Pantalla) -> Unit, buscar: (String) -> Unit) {
                 ),
             )
         }
-        item { FiltroTipos(tipo, R.string.tab_home) { tipo = it } }
+        item { Box(Modifier.entrada(1)) { FiltroTipos(tipo, R.string.tab_home) { tipo = it } } }
         item {
-            if (hero != null) Hero(hero)
+            if (hero != null) Box(Modifier.entrada(2)) { Hero(hero) }
             else Tarjeta { Text(stringResource(R.string.no_sources), Modifier.padding(20.dp)) }
         }
         if (tendencias.isNotEmpty()) {
             item { CabeceraFila(R.string.trending) { buscar("") } }
             item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyRow(Modifier.entrada(3), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(tendencias) { (fid, itm) ->
-                        Column(Modifier.width(118.dp).clickable { abrir(Pantalla.Detalle(fid, itm)) }) {
+                        Column(Modifier.width(118.dp).rebote { abrir(Pantalla.Detalle(fid, itm)) }) {
                             AsyncImage(itm.portada, null,
                                 Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(18.dp)).background(cs.surfaceVariant),
                                 contentScale = ContentScale.Crop)
@@ -97,12 +97,12 @@ fun HomeScreen(abrir: (Pantalla) -> Unit, buscar: (String) -> Unit) {
                 }
             }
         }
-        item { CabeceraFila(R.string.new_episodes) { abrir(Pantalla.Sec(Seccion.Actualizaciones)) } }
+        item { CabeceraFila(R.string.new_episodes) { irUpdates() } }
         item {
             if (ups.isEmpty()) Text(stringResource(R.string.no_updates), color = cs.outline)
-            else LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            else LazyRow(Modifier.entrada(4), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(ups.take(15)) { x ->
-                    Column(Modifier.width(210.dp).clickable { abrir(Pantalla.Leer(x.fuenteId, x.item, x.cap)) }) {
+                    Column(Modifier.width(210.dp).rebote { abrir(Pantalla.Leer(x.fuenteId, x.item, x.cap)) }) {
                         AsyncImage(x.item.portada, null,
                             Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(RoundedCornerShape(18.dp)).background(cs.surfaceVariant),
                             contentScale = ContentScale.Crop)
@@ -129,7 +129,7 @@ private fun CabeceraFila(titulo: Int, onClick: () -> Unit) {
 private fun Hero(h: HeroDatos) {
     Box(
         Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(26.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant).clickable(onClick = h.onClick)
+            .background(MaterialTheme.colorScheme.surfaceVariant).rebote(onClick = h.onClick)
     ) {
         AsyncImage(h.item.portada, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = .85f)))))

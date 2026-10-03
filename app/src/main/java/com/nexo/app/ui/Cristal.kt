@@ -1,6 +1,10 @@
 package com.nexo.app.ui
 
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -55,7 +59,7 @@ fun Modifier.vidrio(
     val propia = rememberGraphicsLayer()
     var origen by remember { mutableStateOf(Offset.Zero) }
     val px = with(LocalDensity.current) { blur.toPx() }
-    val soporta = Build.VERSION.SDK_INT >= 31
+    val soporta = Build.VERSION.SDK_INT >= 31 && Ajustes.efectosCristal
     SideEffect { if (soporta) propia.renderEffect = BlurEffect(px, px, TileMode.Clamp) }
     return this
         .onGloballyPositioned { origen = it.positionInRoot() }
@@ -65,7 +69,7 @@ fun Modifier.vidrio(
                 propia.record { translate(-origen.x, -origen.y) { drawLayer(fondo) } }
                 drawLayer(propia)
             }
-            drawRect(tinte)
+            drawRect(if (soporta) tinte else tinte.copy(alpha = .92f))
         }
         .border(1.dp, Color.White.copy(alpha = .14f), forma)
 }
@@ -86,17 +90,18 @@ fun Fondo() {
                 listOf(b.copy(alpha = if (claro) .16f else .20f), Color.Transparent),
                 center = Offset(size.width * .95f, size.height * .85f), radius = size.minDimension * 1.25f))
         }
-    )
+    ) {
+        if (Ajustes.fondoAnimado && !claro) Estrellas(a)
+    }
 }
 
 @Composable
 fun Tarjeta(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     val c = MaterialTheme.colorScheme.onSurface
     val forma = RoundedCornerShape(28.dp)
+    val base = if (onClick != null) modifier.rebote(onClick = onClick) else modifier
     Column(
-        modifier.fillMaxWidth().clip(forma).background(c.copy(alpha = .07f))
-            .border(1.dp, c.copy(alpha = .10f), forma)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
+        base.fillMaxWidth().clip(forma).background(c.copy(alpha = .07f)).border(1.dp, c.copy(alpha = .10f), forma),
         content = content,
     )
 }
@@ -113,8 +118,6 @@ fun EncabezadoNexo(onSettings: () -> Unit, modifier: Modifier = Modifier) {
             .statusBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(painterResource(R.drawable.ic_sparkle), null, Modifier.size(26.dp))
-        Spacer(Modifier.width(8.dp))
         Image(painterResource(R.drawable.logo_nexo), "Nexo", Modifier.height(30.dp))
         Spacer(Modifier.weight(1f))
         IconButton(onSettings, Modifier.size(42.dp).clip(CircleShape).background(Color.White.copy(alpha = .10f))) {
@@ -136,10 +139,11 @@ fun BarraNav(tab: Pestana, onTab: (Pestana) -> Unit, modifier: Modifier = Modifi
             val col = if (sel) cs.onPrimary else cs.onSurface.copy(alpha = .8f)
             Column(
                 Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(30.dp))
-                    .background(if (sel) cs.primary else Color.Transparent).clickable { onTab(t) },
+                    .background(animateColorAsState(if (sel) cs.primary else Color.Transparent, spring(), label = "nav").value).rebote { onTab(t) },
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
             ) {
-                Icon(t.icono, null, tint = col)
+                val esc by animateFloatAsState(if (sel) 1.18f else 1f, spring(dampingRatio = Spring.DampingRatioHighBouncy), label = "icono")
+                Icon(t.icono, null, Modifier.graphicsLayer { scaleX = esc; scaleY = esc }, tint = col)
                 Text(stringResource(t.label), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = col)
             }
         }
